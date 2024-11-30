@@ -10,12 +10,10 @@ async function predictClassification(model, image) {
             .expandDims()
             .toFloat()
  
-        const classes = ['Cancer', 'Non-Cancer'];
  
         const prediction = model.predict(tensor);
  
-        const classResult = tf.argMax(prediction, 1).dataSync()[0];
-        const label = classes[classResult];
+        const label = prediction > 0.5 ? 'Cancer' : 'Non-cancer';
  
         let suggestion;
     
