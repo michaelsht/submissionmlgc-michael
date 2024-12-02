@@ -11,11 +11,11 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Inisialisasi Firebase Admin SDK dengan Service Account Key
-const serviceAccount = require("./submissionmlgc-michaelsi-1b3b4-firebase-adminsdk-mrokh-799b96c52a.json");
+const serviceAccount = require("./database.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://submissionmlgc-michaelsi-1b3b4.firebaseio.com",
+  databaseURL: "https://submissionmlgc-michaelshtg.firebaseio.com",
 });
 
 // Mendapatkan instance Firestore
@@ -42,7 +42,7 @@ app.get("/predict/histories", async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching prediction history:", error);
-    res.status(500).json({
+    res.status(400).json({
       status: "fail",
       message: "Gagal mengambil riwayat prediksi",
     });
@@ -56,7 +56,7 @@ app.post("/predict", upload.single("image"), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({
         status: "fail",
-        message: "Terjadi kesalahan dalam melakukan prediksi, file tidak ditemukan",
+        message: "Terjadi kesalahan dalam melakukan prediksi",
       });
     }
 
@@ -70,7 +70,7 @@ app.post("/predict", upload.single("image"), async (req, res) => {
 
     // 3. Load Model untuk Prediksi
     const model = await tf.loadGraphModel(
-      "https://storage.googleapis.com/bucket-cloud-ml-michael/model/model.json"
+      "https://storage.googleapis.com/bucket-cloud-ml-cancer-michael/model/model.json"
     );
 
     // 4. Lakukan Prediksi
@@ -82,8 +82,8 @@ app.post("/predict", upload.single("image"), async (req, res) => {
     const label = classes[classResult];
     const suggestion =
       classResult === 0
-        ? "Cek ke dokter secepatnya!"
-        : "Belum ada tanda-tanda tapi tetap jaga kesehatan!";
+        ? "Segera periksa ke dokter!"
+        : "Penyakit kanker tidak terdeteksi.";
 
     // 5. Simpan Data Prediksi ke Firestore
     const payload = {
@@ -98,12 +98,12 @@ app.post("/predict", upload.single("image"), async (req, res) => {
     // Kirimkan Response ke Pengguna
     return res.status(201).json({
       status: "success",
-      message: "Prediksi berhasil dilakukan",
+      message: "Model is predicted successfully",
       data: payload,
     });
   } catch (error) {
     console.error("Error during prediction:", error);
-    return res.status(500).json({
+    return res.status(400).json({
       status: "fail",
       message: "Terjadi kesalahan dalam melakukan prediksi",
     });
@@ -115,7 +115,7 @@ app.use((err, req, res, next) => {
   if (err.code === "LIMIT_FILE_SIZE") {
     res.status(413).json({
       status: "fail",
-      message: "Ukuran file melebihi batas yang diperbolehkan (1MB)",
+      message: "Payload content length greater than maximum allowed: 1000000",
     });
   } else {
     next(err);
